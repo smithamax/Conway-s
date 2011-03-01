@@ -1,0 +1,124 @@
+<html>
+<head>
+	<title></title>
+</head>
+<body>
+
+<script type="text/javascript">
+var SIZE = 256
+canvas = document.createElement( 'canvas' );
+canvas.width = SIZE;
+canvas.height = SIZE;
+
+ctx = canvas.getContext('2d');
+
+document.body.appendChild( canvas )
+
+var a = ctx.createImageData(SIZE, SIZE);
+var b = ctx.createImageData(SIZE, SIZE);
+black(a);
+//Any live cell with fewer than two live neighbours dies, as if caused by under-population.
+//Any live cell with two or three live neighbours lives on to the next generation.
+//Any live cell with more than three live neighbours dies, as if by overcrowding.
+//Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
+
+window.requestAnimFrame = (function(){
+	return  window.requestAnimationFrame       || 
+		  window.webkitRequestAnimationFrame || 
+		  window.mozRequestAnimationFrame    || 
+		  window.oRequestAnimationFrame      || 
+		  window.msRequestAnimationFrame     || 
+		  function(/* function */ callback, /* DOMElement */ element){
+			window.setTimeout(callback, 1000 / 60);
+		  };
+})();
+
+
+// usage: 
+// instead of setInterval(render, 16) ....
+
+
+function render(){
+	for(var i = 0; i < SIZE; i++){
+		for(var j = 0; j < SIZE; j++){
+			var c = count(a, i, j)
+			if(getPix(a, i, j) == 255){
+				if(c<2 || c>3){
+					setPix(b, i, j, 0)
+					//console.log(i,j,c,"died")
+				}
+				if(c == 2 || c == 3){
+					setPix(b, i, j, 255)
+					//console.log(i,j,c, "lived on")
+				}
+			}else{
+				if(c==3){
+					setPix(b, i, j, 255)
+					//console.log(i,j,c, "is alive!")
+				}else{
+					setPix(b, i, j, 0)
+					//console.log(i,j,c)
+				}
+			}
+		}
+	}
+	ctx.putImageData(b , 0, 0);
+	var temp = a;
+	a=b;
+	b=temp;
+}
+
+(function animloop(){
+  render();
+  requestAnimFrame(animloop);
+})();
+
+function setPix(buffer, x, y, state){
+	buffer.data[(y*SIZE+x)*4 + 3] = state;
+}
+function getPix(buffer, x, y){
+	x = wrap(x);
+	y = wrap(y);
+	return buffer.data[(y*SIZE+x)*4 + 3];
+}
+function black(buffer){
+	for(var i = 0; i < buffer.data.length; i++){
+		if(i%4 == 3){
+			if(Math.random() < .5){
+				buffer.data[i] = 255;
+			}else{
+				buffer.data[i] = 0;
+			}
+		}else{
+			buffer.data[i] = 0;
+		}
+	}
+}
+function count(buffer, x, y){
+	var c = 0;
+
+	for(var i = -1; i <= 1; i++){
+		for(var j = -1; j <= 1; j++){
+			if(j != 0 || i != 0)
+				if(getPix(buffer, x+i, y+j) == 255){
+					c++
+				}
+		}
+	}
+	return c
+}
+function wrap(n){
+	n = n%SIZE
+	if (n < 0){
+		n = SIZE - n 
+	}
+	return n;
+}
+
+
+</script>
+</body>
+</html>
+
+
+
