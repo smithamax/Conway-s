@@ -6,6 +6,49 @@
 
 <script type="text/javascript">
 var SIZE = 256
+ImageData.prototype.setPix = function(x, y, state){
+	this.data[(y*SIZE+x)*4 + 3] = state;
+}
+ImageData.prototype.getPix = function(x, y){
+	x = wrap(x);
+	y = wrap(y);
+	return this.data[(y*SIZE+x)*4 + 3];
+}
+ImageData.prototype.black = function(){
+	for(var i = 0; i < this.data.length; i++){
+		if(i%4 == 3){
+			if(Math.random() < .5){
+				this.data[i] = 255;
+			}else{
+				this.data[i] = 0;
+			}
+		}else{
+			this.data[i] = 0;
+		}
+	}
+}
+ImageData.prototype.count = function(x, y){
+	var c = 0;
+
+	for(var i = -1; i <= 1; i++){
+		for(var j = -1; j <= 1; j++){
+			if(j != 0 || i != 0)
+				if(this.getPix(x+i, y+j) == 255){
+					c++
+				}
+		}
+	}
+	return c
+}
+
+function wrap(n){
+	n = n%SIZE
+	if (n < 0){
+		n = SIZE - n 
+	}
+	return n;
+}
+
 canvas = document.createElement( 'canvas' );
 canvas.width = SIZE;
 canvas.height = SIZE;
@@ -16,7 +59,7 @@ document.body.appendChild( canvas )
 
 var a = ctx.createImageData(SIZE, SIZE);
 var b = ctx.createImageData(SIZE, SIZE);
-black(a);
+a.black();
 //Any live cell with fewer than two live neighbours dies, as if caused by under-population.
 //Any live cell with two or three live neighbours lives on to the next generation.
 //Any live cell with more than three live neighbours dies, as if by overcrowding.
@@ -41,22 +84,22 @@ window.requestAnimFrame = (function(){
 function render(){
 	for(var i = 0; i < SIZE; i++){
 		for(var j = 0; j < SIZE; j++){
-			var c = count(a, i, j)
-			if(getPix(a, i, j) == 255){
+			var c = a.count(i, j)
+			if(a.getPix(i, j) == 255){
 				if(c<2 || c>3){
-					setPix(b, i, j, 0)
+					b.setPix(i, j, 0)
 					//console.log(i,j,c,"died")
 				}
 				if(c == 2 || c == 3){
-					setPix(b, i, j, 255)
+					b.setPix(i, j, 255)
 					//console.log(i,j,c, "lived on")
 				}
 			}else{
 				if(c==3){
-					setPix(b, i, j, 255)
+					b.setPix(i, j, 255)
 					//console.log(i,j,c, "is alive!")
 				}else{
-					setPix(b, i, j, 0)
+					b.setPix(i, j, 0)
 					//console.log(i,j,c)
 				}
 			}
@@ -73,47 +116,6 @@ function render(){
   requestAnimFrame(animloop);
 })();
 
-function setPix(buffer, x, y, state){
-	buffer.data[(y*SIZE+x)*4 + 3] = state;
-}
-function getPix(buffer, x, y){
-	x = wrap(x);
-	y = wrap(y);
-	return buffer.data[(y*SIZE+x)*4 + 3];
-}
-function black(buffer){
-	for(var i = 0; i < buffer.data.length; i++){
-		if(i%4 == 3){
-			if(Math.random() < .5){
-				buffer.data[i] = 255;
-			}else{
-				buffer.data[i] = 0;
-			}
-		}else{
-			buffer.data[i] = 0;
-		}
-	}
-}
-function count(buffer, x, y){
-	var c = 0;
-
-	for(var i = -1; i <= 1; i++){
-		for(var j = -1; j <= 1; j++){
-			if(j != 0 || i != 0)
-				if(getPix(buffer, x+i, y+j) == 255){
-					c++
-				}
-		}
-	}
-	return c
-}
-function wrap(n){
-	n = n%SIZE
-	if (n < 0){
-		n = SIZE - n 
-	}
-	return n;
-}
 
 
 </script>
